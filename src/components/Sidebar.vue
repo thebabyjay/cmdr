@@ -45,80 +45,98 @@ const isActive = (path: string) => {
 
 <style scoped>
 .sidebar {
-  width: 220px;
+  width: 240px;
   background: var(--bg-secondary);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid var(--border-primary);
 }
 
 .logo {
-  padding: 24px 20px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 10px;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .logo-icon {
-  font-size: 24px;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-accent);
+  border-radius: 6px;
 }
 
 .logo-text {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   letter-spacing: -0.5px;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .nav {
   flex: 1;
-  padding: 16px 12px;
+  padding: 12px 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
   color: var(--text-secondary);
   text-decoration: none;
-  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
 }
 
 .nav-item.active {
-  background: rgba(0, 217, 255, 0.15);
+  background: var(--accent-muted);
   color: var(--accent);
+  border-color: var(--accent-subtle);
 }
 
 .nav-item i {
-  font-size: 18px;
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
 }
 
 .sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .version {
-  color: var(--text-secondary);
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: "SF Mono", monospace;
 }
 
 .debug-hint {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: 10px;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 </style>

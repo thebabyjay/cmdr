@@ -54,28 +54,21 @@ const actions = [
     id: "new-project",
     label: "New Project",
     icon: "pi-plus",
-    color: "#00d9ff",
+    colorVar: "--accent",
     action: () => router.push("/projects?new=true"),
   },
   {
-    id: "open-folder",
-    label: "Open Folder",
+    id: "import-folder",
+    label: "Import Folder",
     icon: "pi-folder-open",
-    color: "#ffc107",
+    colorVar: "--warning",
     action: openFolderAction,
-  },
-  {
-    id: "new-workspace",
-    label: "New Workspace",
-    icon: "pi-th-large",
-    color: "#00c853",
-    action: () => router.push("/workspaces?new=true"),
   },
   {
     id: "terminal",
     label: "Open Terminal",
     icon: "pi-desktop",
-    color: "#ff5252",
+    colorVar: "--purple",
     action: openTerminalAction,
   },
 ];
@@ -87,10 +80,11 @@ const actions = [
       v-for="action in actions"
       :key="action.id"
       class="quick-action-btn"
+      :class="action.id"
       @click="action.action"
     >
-      <div class="action-icon" :style="{ background: action.color + '20' }">
-        <i :class="['pi', action.icon]" :style="{ color: action.color }"></i>
+      <div class="action-icon">
+        <i :class="['pi', action.icon]"></i>
       </div>
       <span>{{ action.label }}</span>
     </button>
@@ -100,42 +94,59 @@ const actions = [
 <style scoped>
 .quick-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .quick-action-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+  gap: 10px;
+  padding: 10px 16px;
   background: var(--bg-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   color: var(--text-primary);
+  font-size: 13px;
 }
 
 .quick-action-btn:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
+  border-color: var(--border-accent);
+  background: var(--bg-tertiary);
 }
 
 .action-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .action-icon i {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .quick-action-btn span {
   font-weight: 500;
+}
+
+/* Color variants */
+.new-project .action-icon {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+.import-folder .action-icon {
+  background: var(--warning-muted);
+  color: var(--warning);
+}
+
+.terminal .action-icon {
+  background: var(--purple-muted);
+  color: var(--purple);
 }
 </style>

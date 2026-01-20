@@ -18,7 +18,7 @@ const settingsStore = useSettingsStore();
 
 const globalCommands = computed(() => settingsStore.settings.globalCommands || []);
 
-const activeTab = ref("overview");
+const activeTab = ref((route.query.tab as string) || "overview");
 const showDeleteConfirm = ref(false);
 const showAddEnvironment = ref(false);
 const showAddWorkspace = ref(false);

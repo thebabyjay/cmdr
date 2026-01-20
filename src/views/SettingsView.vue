@@ -286,7 +286,7 @@ const deleteGlobalCommand = async (cmdId: string) => {
 
 <style scoped>
 .settings-view {
-  max-width: 800px;
+  max-width: 700px;
 }
 
 .page-header {
@@ -294,74 +294,92 @@ const deleteGlobalCommand = async (cmdId: string) => {
 }
 
 .page-header h1 {
-  font-size: 24px;
+  font-size: 20px;
+  font-weight: 600;
   margin-bottom: 4px;
 }
 
 .subtitle {
   color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .settings-section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  padding: 16px;
 }
 
 .settings-section h2 {
-  font-size: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
 }
 
 .setting-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .setting-item:last-child {
   border-bottom: none;
+  padding-bottom: 0;
+}
+
+.setting-item:first-of-type {
+  padding-top: 0;
 }
 
 .setting-info label {
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   display: block;
+  font-size: 14px;
 }
 
 .setting-info p {
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .setting-item select,
 .setting-item input {
-  padding: 10px 14px;
-  background: var(--bg-primary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
   color: var(--text-primary);
   min-width: 200px;
+  font-size: 13px;
 }
 
 .setting-item select:focus,
 .setting-item input:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
 }
 
 .about-info {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .about-row {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .about-row span:first-child {
@@ -369,17 +387,19 @@ const deleteGlobalCommand = async (cmdId: string) => {
 }
 
 .about-row code {
-  font-family: monospace;
-  background: var(--bg-primary);
-  padding: 4px 8px;
+  font-family: "SF Mono", monospace;
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
   border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-primary);
 }
 
 .settings-footer {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .saved-message {
@@ -387,7 +407,7 @@ const deleteGlobalCommand = async (cmdId: string) => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* Global Commands Section */
@@ -396,8 +416,8 @@ const deleteGlobalCommand = async (cmdId: string) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .section-header h2 {
@@ -407,60 +427,64 @@ const deleteGlobalCommand = async (cmdId: string) => {
 }
 
 .section-description {
-  color: var(--text-secondary);
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 12px;
   margin-bottom: 16px;
 }
 
 .empty-commands {
   text-align: center;
   padding: 24px;
-  background: var(--bg-primary);
-  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
 }
 
 .empty-commands p {
   color: var(--text-secondary);
   margin-bottom: 12px;
+  font-size: 13px;
 }
 
 .commands-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .command-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: var(--bg-primary);
-  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
 }
 
 .command-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .command-name {
   font-weight: 500;
+  font-size: 13px;
 }
 
 .command-value {
-  font-family: monospace;
-  font-size: 13px;
+  font-family: "SF Mono", monospace;
+  font-size: 12px;
   color: var(--accent);
-  background: rgba(0, 217, 255, 0.1);
-  padding: 2px 8px;
+  background: var(--accent-muted);
+  padding: 2px 6px;
   border-radius: 4px;
 }
 
 .command-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .command-actions {
@@ -469,44 +493,37 @@ const deleteGlobalCommand = async (cmdId: string) => {
 }
 
 .btn-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .btn-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-elevated);
   color: var(--text-primary);
+  border-color: var(--border-accent);
 }
 
 .btn-icon.btn-danger:hover {
-  background: rgba(255, 82, 82, 0.15);
-  border-color: rgba(255, 82, 82, 0.3);
-  color: #ff5252;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  background: var(--danger-muted);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* Modal styles */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -514,40 +531,44 @@ const deleteGlobalCommand = async (cmdId: string) => {
 }
 
 .modal {
-  background: var(--bg-secondary);
-  border-radius: 12px;
+  background: var(--bg-card);
+  border-radius: 8px;
   width: 100%;
-  max-width: 450px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 420px;
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 16px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  border-radius: 0 0 8px 8px;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .form-group:last-child {
@@ -556,7 +577,7 @@ const deleteGlobalCommand = async (cmdId: string) => {
 
 .form-group label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
   margin-bottom: 6px;
   font-weight: 500;
@@ -564,16 +585,17 @@ const deleteGlobalCommand = async (cmdId: string) => {
 
 .form-group input {
   width: 100%;
-  padding: 10px 14px;
-  background: var(--bg-primary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
 }
 </style>

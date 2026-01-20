@@ -66,12 +66,12 @@ const handleOpen = async () => {
         <router-link
           :to="`/projects/${project.id}`"
           class="btn btn-secondary btn-sm"
+          title="Project settings"
         >
           <i class="pi pi-cog"></i>
         </router-link>
-        <button class="btn btn-primary btn-sm" @click="handleOpen">
-          <i class="pi pi-play"></i>
-          Open
+        <button class="btn btn-secondary btn-sm" @click="handleOpen" title="Open in Finder">
+          <i class="pi pi-folder-open"></i>
         </button>
       </div>
     </div>
@@ -82,60 +82,80 @@ const handleOpen = async () => {
 .project-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  padding: 14px;
+  transition: border-color 0.15s ease;
+}
+
+.project-card:hover {
+  border-color: var(--border-accent);
 }
 
 .card-header {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
 }
 
 .project-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(0, 217, 255, 0.15);
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  background: var(--accent-muted);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
+  flex-shrink: 0;
+}
+
+.project-icon i {
+  font-size: 16px;
+}
+
+.project-info {
+  min-width: 0;
+  flex: 1;
 }
 
 .project-info h3 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  color: var(--text-primary);
 }
 
 .project-path {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: "SF Mono", monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 200px;
 }
 
 .project-description {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .tag {
   font-size: 11px;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  background: var(--bg-tertiary);
   border-radius: 4px;
   color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
 }
 
 .card-footer {
@@ -143,28 +163,24 @@ const handleOpen = async () => {
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .last-opened {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 11px;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+}
+
+.last-opened i {
+  font-size: 12px;
 }
 
 .actions {
   display: flex;
-  gap: 8px;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
   gap: 6px;
 }
 </style>

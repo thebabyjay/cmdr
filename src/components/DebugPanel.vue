@@ -79,13 +79,13 @@ function formatJson(obj: unknown): string {
 
 <style scoped>
 .debug-panel {
-  width: 400px;
+  width: 380px;
   height: 100vh;
-  background: #1a1a2e;
-  border-left: 1px solid #333;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-family: "SF Mono", "Fira Code", Menlo, Monaco, monospace;
   font-size: 12px;
 }
 
@@ -94,80 +94,84 @@ function formatJson(obj: unknown): string {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #16213e;
-  border-bottom: 1px solid #333;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .debug-header h3 {
   margin: 0;
-  font-size: 14px;
-  color: #00d9ff;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: #888;
-  font-size: 20px;
+  color: var(--text-muted);
+  font-size: 18px;
   cursor: pointer;
   padding: 0 4px;
   line-height: 1;
 }
 
 .close-btn:hover {
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .debug-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 12px;
 }
 
 .debug-section {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .debug-section h4 {
   margin: 0 0 8px 0;
-  font-size: 12px;
-  color: #888;
+  font-size: 11px;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .json-display {
-  background: #0f0f1a;
-  border: 1px solid #333;
+  background: var(--bg-input);
+  border: 1px solid var(--border-primary);
   border-radius: 4px;
-  padding: 12px;
+  padding: 10px;
   margin: 0;
   overflow-x: auto;
-  color: #a8ff60;
+  color: var(--success);
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 400px;
+  max-height: 350px;
   overflow-y: auto;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 .debug-footer {
-  padding: 8px 16px;
-  background: #16213e;
-  border-top: 1px solid #333;
+  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-primary);
   text-align: center;
 }
 
 .hint {
-  color: #666;
+  color: var(--text-muted);
   font-size: 11px;
 }
 
 kbd {
-  background: #333;
-  border: 1px solid #444;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
   border-radius: 3px;
   padding: 1px 5px;
   font-size: 10px;
-  color: #aaa;
+  color: var(--text-secondary);
 }
 </style>
