@@ -4,7 +4,10 @@ use std::process::Command;
 
 /// Generate AppleScript to launch a workspace in iTerm2
 pub fn launch_workspace(project: &Project, workspace: &Workspace) -> Result<()> {
-    log::info!("[iTerm] Generating AppleScript for workspace: {}", workspace.name);
+    log::info!(
+        "[iTerm] Generating AppleScript for workspace: {}",
+        workspace.name
+    );
     log::debug!("[iTerm] Project path: {}", project.path);
     log::debug!("[iTerm] Workspace layout: {} rows", workspace.layout.rows);
 
@@ -38,11 +41,14 @@ fn generate_applescript(project: &Project, workspace: &Workspace) -> String {
     let layout = &workspace.layout;
     let panes = &workspace.panes;
 
-    // Calculate total panes needed based on layout
-    // Layout: rows x columns (e.g., 2 rows with [2, 3] columns = 2 on top, 3 on bottom = 5 panes)
     let total_panes: u32 = layout.columns.iter().sum();
+    let num_rows = layout.columns.len();
 
-    log::debug!("[iTerm] Generating script for {} panes across {} rows", total_panes, layout.rows);
+    log::debug!(
+        "[iTerm] Generating script for {} panes across {} rows",
+        total_panes,
+        num_rows
+    );
     log::debug!("[iTerm] Layout columns: {:?}", layout.columns);
 
     let mut script = String::new();
@@ -61,97 +67,84 @@ tell application "iTerm"
 "#,
     );
 
-    // Strategy: Create all sessions first using splits, then configure each one.
-    // We use session indices to reference sessions after creation.
+    // Strategy: Use AppleScript variables to track session references
+    // This is more reliable than assuming session numbers are sequential
     //
-    // For a layout like [2, 3] (2 on top, 3 on bottom):
-    // Session 1: (0,0) - created with window
-    // Session 2: (0,1) - split vertically from session 1
-    // Session 3: (1,0) - split horizontally from session 1
-    // Session 4: (1,1) - split vertically from session 3
-    // Session 5: (1,2) - split vertically from session 4
-    //
-    // The key is: for each new row, we split horizontally from the leftmost session
-    // of the previous row. For columns within a row, we split vertically from the
-    // previous session in that row.
+    // 1. Store reference to first session as sess_0_0
+    // 2. Create all rows by splitting first session horizontally, storing refs
+    // 3. For each row, split vertically to create columns, storing refs
+    // 4. Configure each session using the stored variable references
 
-    // Track which session index corresponds to which (row, col)
-    // sessions[row][col] = session_index (1-based for AppleScript)
-    let mut sessions: Vec<Vec<u32>> = Vec::new();
-    let mut current_session: u32 = 1;
+    // Helper to generate variable name for a session at (row, col)
+    let sess_var = |row: usize, col: usize| format!("sess_{}_{}", row, col);
 
-    // First row: session 1 is created with the window
-    let first_row_cols = layout.columns.first().copied().unwrap_or(1);
-    let mut first_row_sessions: Vec<u32> = vec![1];
+    // Store reference to the first session (row 0, col 0)
+    script.push_str(&format!(
+        r#"
+        -- Store reference to first session
+        set {} to current session of theTab
+"#,
+        sess_var(0, 0)
+    ));
 
-    // Create additional columns in first row via vertical splits
-    for col in 1..first_row_cols {
-        current_session += 1;
-        first_row_sessions.push(current_session);
+    // Step 1: Create all rows by splitting horizontally
+    // Each new row is created by splitting the previous row's first pane
+    // This ensures rows are added at the bottom in correct order
+    for row_idx in 1..num_rows {
+        let prev_row = row_idx - 1;
         script.push_str(&format!(
             r#"
-        -- Create session {} (row 0, col {})
-        tell session {} of theTab
-            split vertically with default profile
+        -- Create row {} by splitting row {} horizontally
+        tell {}
+            set {} to (split horizontally with default profile)
         end tell
 "#,
-            current_session, col, current_session - 1
+            row_idx,
+            prev_row,
+            sess_var(prev_row, 0),
+            sess_var(row_idx, 0)
         ));
     }
-    sessions.push(first_row_sessions);
 
-    // Create additional rows
-    for (row_idx, &cols_in_row) in layout.columns.iter().enumerate().skip(1) {
-        let mut row_sessions: Vec<u32> = Vec::new();
+    // Step 2: Create columns in each row by splitting vertically
+    // We split the rightmost pane in each row to add columns to the right
+    for row_idx in 0..num_rows {
+        let cols_in_row = layout.columns[row_idx] as usize;
 
-        // First column of new row: split horizontally from leftmost session of previous row
-        let prev_row_first_session = sessions[row_idx - 1][0];
-        current_session += 1;
-        row_sessions.push(current_session);
-        script.push_str(&format!(
-            r#"
-        -- Create session {} (row {}, col 0)
-        tell session {} of theTab
-            split horizontally with default profile
-        end tell
-"#,
-            current_session, row_idx, prev_row_first_session
-        ));
-
-        // Additional columns in this row: split vertically from previous column's session
-        for col in 1..cols_in_row {
-            let prev_col_session = row_sessions[col as usize - 1];
-            current_session += 1;
-            row_sessions.push(current_session);
+        for col_idx in 1..cols_in_row {
+            let prev_col = col_idx - 1;
             script.push_str(&format!(
                 r#"
-        -- Create session {} (row {}, col {})
-        tell session {} of theTab
-            split vertically with default profile
+        -- Create row {} col {} by splitting vertically
+        tell {}
+            set {} to (split vertically with default profile)
         end tell
 "#,
-                current_session, row_idx, col, prev_col_session
+                row_idx,
+                col_idx,
+                sess_var(row_idx, prev_col),
+                sess_var(row_idx, col_idx)
             ));
         }
-
-        sessions.push(row_sessions);
     }
 
-    // Now configure each session with its directory and command
+    // Small delay to ensure all sessions are ready
     script.push_str(
         r#"
         -- Small delay to ensure all sessions are ready
-        delay 0.1
+        delay 0.3
 "#,
     );
 
-    // Get pane for each (row, col) position and configure the corresponding session
-    for (row_idx, row_sessions) in sessions.iter().enumerate() {
-        for (col_idx, &session_num) in row_sessions.iter().enumerate() {
+    // Configure each session with its directory and command
+    for row_idx in 0..num_rows {
+        let cols_in_row = layout.columns[row_idx] as usize;
+
+        for col_idx in 0..cols_in_row {
             // Find pane with this position
-            let pane = panes.iter().find(|p| {
-                p.position[0] as usize == row_idx && p.position[1] as usize == col_idx
-            });
+            let pane = panes
+                .iter()
+                .find(|p| p.position.0 as usize == row_idx && p.position.1 as usize == col_idx);
 
             let dir = if let Some(p) = pane {
                 resolve_directory(&project.path, &p.directory)
@@ -161,11 +154,13 @@ tell application "iTerm"
 
             script.push_str(&format!(
                 r#"
-        -- Configure session {} (row {}, col {})
-        tell session {} of theTab
+        -- Configure session at row {}, col {}
+        tell {}
             write text "cd '{}'"
 "#,
-                session_num, row_idx, col_idx, session_num,
+                row_idx,
+                col_idx,
+                sess_var(row_idx, col_idx),
                 escape_applescript_string(&dir)
             ));
 
