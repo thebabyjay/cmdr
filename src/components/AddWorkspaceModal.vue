@@ -126,6 +126,19 @@ const getCommandForPane = (pane: PaneConfig): string | undefined => {
   return undefined;
 };
 
+// Get display text for preview
+const getCommandDisplayForPane = (pane: PaneConfig): string => {
+  if (pane.commandType === "none") {
+    return "";
+  } else if (pane.commandType === "preset" && pane.selectedCommandId) {
+    const cmd = allCommands.value.find(c => c.id === pane.selectedCommandId);
+    return cmd?.name || "";
+  } else if (pane.commandType === "custom" && pane.customCommand) {
+    return pane.customCommand.length > 20 ? pane.customCommand.slice(0, 20) + "..." : pane.customCommand;
+  }
+  return "";
+};
+
 const handleSubmit = () => {
   if (!name.value.trim()) {
     error.value = "Workspace name is required";
@@ -291,10 +304,12 @@ const close = () => {
                 :style="{ gridTemplateColumns: `repeat(${row.columns}, 1fr)` }"
               >
                 <div
-                  v-for="paneIndex in row.columns"
+                  v-for="(pane, paneIndex) in row.panes"
                   :key="paneIndex"
                   class="preview-pane"
-                ></div>
+                >
+                  <span class="preview-command">{{ getCommandDisplayForPane(pane) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -581,9 +596,25 @@ form {
 
 .preview-pane {
   height: 32px;
-  background: var(--accent);
-  opacity: 0.3;
+  background: var(--bg-secondary);
   border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.preview-command {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-family: "SF Mono", monospace;
 }
 
 .error-message {

@@ -318,6 +318,27 @@ const isPaneCommandPreset = (row: number, col: number): boolean => {
   return selection !== 'none' && selection !== 'custom';
 };
 
+// Get display text for a pane's command (for preview)
+const getCommandDisplayText = (pane: Pane | undefined): string => {
+  if (!pane?.command) return '';
+
+  // Check if it matches a global command
+  const globalCmd = globalCommands.value.find(c => c.command === pane.command);
+  if (globalCmd) return globalCmd.name;
+
+  // Check if it matches a project command
+  const projectCmd = project.value?.commands.find(c => c.command === pane.command);
+  if (projectCmd) return projectCmd.name;
+
+  // Custom command - truncate if too long
+  return pane.command.length > 20 ? pane.command.slice(0, 20) + '...' : pane.command;
+};
+
+// Get pane for a workspace by position
+const getWorkspacePaneAt = (workspace: Workspace, row: number, col: number): Pane | undefined => {
+  return workspace.panes.find(p => p.position[0] === row && p.position[1] === col);
+};
+
 const browsePaneDirectory = async (row: number, col: number) => {
   if (!editingWorkspace.value || !project.value) return;
   const pane = editingWorkspace.value.panes.find(
@@ -752,7 +773,9 @@ const runCommand = async (command: Command) => {
                     v-for="col in cols"
                     :key="col"
                     class="layout-cell"
-                  ></div>
+                  >
+                    <span class="cell-command">{{ getCommandDisplayText(getWorkspacePaneAt(workspace, row, col - 1)) }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1052,7 +1075,9 @@ const runCommand = async (command: Command) => {
                   v-for="colIndex in cols"
                   :key="colIndex"
                   class="preview-pane"
-                ></div>
+                >
+                  <span class="preview-command">{{ getCommandDisplayText(getPaneForPosition(rowIndex, colIndex - 1)) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1577,6 +1602,22 @@ const runCommand = async (command: Command) => {
   background: var(--bg-secondary);
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.cell-command {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-family: "SF Mono", monospace;
 }
 
 /* Larger modal for workspace editor */
@@ -1777,8 +1818,24 @@ const runCommand = async (command: Command) => {
 
 .preview-pane {
   height: 32px;
-  background: var(--accent);
-  opacity: 0.3;
+  background: var(--bg-secondary);
   border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.preview-command {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-family: "SF Mono", monospace;
 }
 </style>

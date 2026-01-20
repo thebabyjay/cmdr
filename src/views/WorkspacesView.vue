@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { useProjectsStore } from "@/stores/projects";
+import { useSettingsStore } from "@/stores/settings";
 import { invoke } from "@tauri-apps/api/core";
-import type { Workspace, Project } from "@/types";
+import type { Workspace, Project, Pane } from "@/types";
 
 const projectsStore = useProjectsStore();
+const settingsStore = useSettingsStore();
+
+const globalCommands = computed(() => settingsStore.settings.globalCommands || []);
 
 onMounted(() => {
   console.log("[WorkspacesView] Mounted, loading projects");
   projectsStore.loadProjects();
+  settingsStore.loadSettings();
 });
 
 const allWorkspaces = computed(() => {
@@ -34,6 +39,27 @@ const launchWorkspace = async (projectId: string, workspaceId: string) => {
     console.error("[WorkspacesView] Failed to launch workspace:", e);
     alert("Failed to launch workspace: " + e);
   }
+};
+
+// Get pane for a workspace by position
+const getWorkspacePaneAt = (workspace: Workspace, row: number, col: number): Pane | undefined => {
+  return workspace.panes.find(p => p.position[0] === row && p.position[1] === col);
+};
+
+// Get display text for a pane's command (for preview)
+const getCommandDisplayText = (pane: Pane | undefined, project: Project): string => {
+  if (!pane?.command) return '';
+
+  // Check if it matches a global command
+  const globalCmd = globalCommands.value.find(c => c.command === pane.command);
+  if (globalCmd) return globalCmd.name;
+
+  // Check if it matches a project command
+  const projectCmd = project.commands.find(c => c.command === pane.command);
+  if (projectCmd) return projectCmd.name;
+
+  // Custom command - truncate if too long
+  return pane.command.length > 15 ? pane.command.slice(0, 15) + '...' : pane.command;
 };
 </script>
 
@@ -82,7 +108,9 @@ const launchWorkspace = async (projectId: string, workspaceId: string) => {
                 :key="col"
                 class="layout-cell"
                 :style="{ flex: 1 }"
-              ></div>
+              >
+                <span class="cell-command">{{ getCommandDisplayText(getWorkspacePaneAt(workspace, row, col - 1), project) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -200,6 +228,22 @@ const launchWorkspace = async (projectId: string, workspaceId: string) => {
   background: var(--bg-secondary);
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.cell-command {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-family: "SF Mono", monospace;
 }
 
 .workspace-info {
