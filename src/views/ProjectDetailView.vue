@@ -290,6 +290,27 @@ const updatePaneCommand = (row: number, col: number, value: string) => {
   }
 };
 
+const browsePaneDirectory = async (row: number, col: number) => {
+  if (!editingWorkspace.value || !project.value) return;
+  const pane = editingWorkspace.value.panes.find(
+    (p) => p.position[0] === row && p.position[1] === col
+  );
+  if (!pane) return;
+
+  try {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      defaultPath: pane.directory || project.value.path || undefined,
+    });
+    if (selected) {
+      pane.directory = selected as string;
+    }
+  } catch (e) {
+    console.error("Failed to open folder picker:", e);
+  }
+};
+
 const addWorkspaceRow = () => {
   if (!editingWorkspace.value || !project.value) return;
   const newRowIndex = editingWorkspace.value.layout.columns.length;
@@ -297,7 +318,7 @@ const addWorkspaceRow = () => {
   editingWorkspace.value.layout.rows = editingWorkspace.value.layout.columns.length;
   editingWorkspace.value.panes.push({
     position: [newRowIndex, 0] as [number, number],
-    directory: project.value.path,
+    directory: "",
     command: undefined,
   });
 };
@@ -332,7 +353,7 @@ const updateWorkspaceRowColumns = (rowIndex: number, newCols: number) => {
     for (let i = oldCols; i < newCols; i++) {
       editingWorkspace.value.panes.push({
         position: [rowIndex, i] as [number, number],
-        directory: project.value.path,
+        directory: "",
         command: undefined,
       });
     }
@@ -777,6 +798,7 @@ const runCommand = async (command: Command) => {
     <AddWorkspaceModal
       v-model:visible="showAddWorkspace"
       :project-path="project.path"
+      :commands="project.commands"
       @add="addWorkspace"
     />
 
@@ -912,20 +934,60 @@ const runCommand = async (command: Command) => {
                     class="pane-config"
                   >
                     <div class="pane-header">Pane {{ colIndex }}</div>
-                    <input
-                      :value="getPaneForPosition(rowIndex, colIndex - 1)?.directory || ''"
-                      @input="updatePaneDirectory(rowIndex, colIndex - 1, ($event.target as HTMLInputElement).value)"
-                      type="text"
-                      placeholder="Directory"
-                      class="pane-input"
-                    />
-                    <input
-                      :value="getPaneForPosition(rowIndex, colIndex - 1)?.command || ''"
-                      @input="updatePaneCommand(rowIndex, colIndex - 1, ($event.target as HTMLInputElement).value)"
-                      type="text"
-                      placeholder="Command (optional)"
-                      class="pane-input"
-                    />
+
+                    <div class="pane-field">
+                      <label>Directory</label>
+                      <div class="input-with-browse">
+                        <input
+                          :value="getPaneForPosition(rowIndex, colIndex - 1)?.directory || ''"
+                          @input="updatePaneDirectory(rowIndex, colIndex - 1, ($event.target as HTMLInputElement).value)"
+                          type="text"
+                          placeholder="Use project default"
+                          class="pane-input"
+                        />
+                        <button
+                          type="button"
+                          class="browse-btn"
+                          @click="browsePaneDirectory(rowIndex, colIndex - 1)"
+                          title="Browse"
+                        >
+                          <i class="pi pi-folder-open"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="pane-field">
+                      <label>Command</label>
+                      <div class="command-input-group">
+                        <select
+                          class="pane-select"
+                          :value="getPaneForPosition(rowIndex, colIndex - 1)?.command ? 'custom' : 'none'"
+                          @change="(e) => {
+                            const val = (e.target as HTMLSelectElement).value;
+                            if (val === 'none') {
+                              updatePaneCommand(rowIndex, colIndex - 1, '');
+                            } else if (val !== 'custom') {
+                              const cmd = project?.commands.find(c => c.id === val);
+                              if (cmd) updatePaneCommand(rowIndex, colIndex - 1, cmd.command);
+                            }
+                          }"
+                        >
+                          <option value="none">None</option>
+                          <option v-for="cmd in project?.commands" :key="cmd.id" :value="cmd.id">
+                            {{ cmd.name }}
+                          </option>
+                          <option value="custom">Custom...</option>
+                        </select>
+                        <input
+                          v-if="getPaneForPosition(rowIndex, colIndex - 1)?.command"
+                          :value="getPaneForPosition(rowIndex, colIndex - 1)?.command || ''"
+                          @input="updatePaneCommand(rowIndex, colIndex - 1, ($event.target as HTMLInputElement).value)"
+                          type="text"
+                          placeholder="Enter command..."
+                          class="pane-input"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1474,7 +1536,7 @@ const runCommand = async (command: Command) => {
 
 /* Larger modal for workspace editor */
 .modal-large {
-  max-width: 700px;
+  max-width: 1000px;
 }
 
 /* Workspace edit modal styles */
@@ -1573,8 +1635,66 @@ const runCommand = async (command: Command) => {
   font-size: 12px !important;
 }
 
-.pane-input:last-child {
+.pane-field {
+  margin-bottom: 8px;
+}
+
+.pane-field:last-child {
   margin-bottom: 0;
+}
+
+.pane-field > label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.input-with-browse {
+  display: flex;
+  gap: 4px;
+}
+
+.input-with-browse input {
+  flex: 1;
+}
+
+.browse-btn {
+  background: var(--bg-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  padding: 0 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.browse-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.command-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pane-select {
+  width: 100%;
+  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.pane-select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .layout-preview-section {

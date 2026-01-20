@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-import type { Workspace, Pane } from "@/types";
+import type { Workspace, Pane, Command } from "@/types";
+import { open } from "@tauri-apps/plugin-dialog";
 
 const props = defineProps<{
   visible: boolean;
   projectPath: string;
+  commands: Command[];
 }>();
 
 const emit = defineEmits<{
@@ -12,11 +14,25 @@ const emit = defineEmits<{
   add: [workspace: Omit<Workspace, "id">];
 }>();
 
+interface PaneConfig {
+  directory: string;
+  commandType: "none" | "preset" | "custom";
+  selectedCommandId: string;
+  customCommand: string;
+}
+
 const name = ref("");
-const rows = ref<{ columns: number; panes: { directory: string; command: string }[] }[]>([
-  { columns: 1, panes: [{ directory: "", command: "" }] },
+const rows = ref<{ columns: number; panes: PaneConfig[] }[]>([
+  { columns: 1, panes: [{ directory: "", commandType: "none", selectedCommandId: "", customCommand: "" }] },
 ]);
 const error = ref<string | null>(null);
+
+const createEmptyPane = (): PaneConfig => ({
+  directory: "",
+  commandType: "none",
+  selectedCommandId: "",
+  customCommand: "",
+});
 
 watch(
   () => props.visible,
@@ -24,7 +40,7 @@ watch(
     if (val) {
       name.value = "";
       rows.value = [
-        { columns: 1, panes: [{ directory: props.projectPath, command: "" }] },
+        { columns: 1, panes: [createEmptyPane()] },
       ];
       error.value = null;
     }
@@ -38,7 +54,7 @@ const totalPanes = computed(() => {
 const addRow = () => {
   rows.value.push({
     columns: 1,
-    panes: [{ directory: props.projectPath, command: "" }],
+    panes: [createEmptyPane()],
   });
 };
 
@@ -55,7 +71,7 @@ const updateRowColumns = (rowIndex: number, newColumns: number) => {
   if (newColumns > oldColumns) {
     // Add panes
     for (let i = oldColumns; i < newColumns; i++) {
-      row.panes.push({ directory: props.projectPath, command: "" });
+      row.panes.push(createEmptyPane());
     }
   } else if (newColumns < oldColumns) {
     // Remove panes
@@ -63,6 +79,33 @@ const updateRowColumns = (rowIndex: number, newColumns: number) => {
   }
 
   row.columns = newColumns;
+};
+
+const browseDirectory = async (pane: PaneConfig) => {
+  try {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      defaultPath: pane.directory || props.projectPath || undefined,
+    });
+    if (selected) {
+      pane.directory = selected as string;
+    }
+  } catch (e) {
+    console.error("Failed to open folder picker:", e);
+  }
+};
+
+const getCommandForPane = (pane: PaneConfig): string | undefined => {
+  if (pane.commandType === "none") {
+    return undefined;
+  } else if (pane.commandType === "preset" && pane.selectedCommandId) {
+    const cmd = props.commands.find(c => c.id === pane.selectedCommandId);
+    return cmd?.command;
+  } else if (pane.commandType === "custom") {
+    return pane.customCommand || undefined;
+  }
+  return undefined;
 };
 
 const handleSubmit = () => {
@@ -76,8 +119,8 @@ const handleSubmit = () => {
     row.panes.forEach((pane, colIndex) => {
       workspacePanes.push({
         position: [rowIndex, colIndex] as [number, number],
-        directory: pane.directory || props.projectPath,
-        command: pane.command || undefined,
+        directory: pane.directory || ".",
+        command: getCommandForPane(pane),
       });
     });
   });
@@ -159,18 +202,54 @@ const close = () => {
                     class="pane-config"
                   >
                     <div class="pane-header">Pane {{ paneIndex + 1 }}</div>
-                    <input
-                      v-model="pane.directory"
-                      type="text"
-                      placeholder="Directory"
-                      class="pane-input"
-                    />
-                    <input
-                      v-model="pane.command"
-                      type="text"
-                      placeholder="Command (optional)"
-                      class="pane-input"
-                    />
+
+                    <div class="pane-field">
+                      <label>Directory</label>
+                      <div class="input-with-button">
+                        <input
+                          v-model="pane.directory"
+                          type="text"
+                          placeholder="Use project default"
+                          class="pane-input"
+                        />
+                        <button
+                          type="button"
+                          class="browse-btn"
+                          @click="browseDirectory(pane)"
+                          title="Browse"
+                        >
+                          <i class="pi pi-folder-open"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="pane-field">
+                      <label>Command</label>
+                      <select v-model="pane.commandType" class="pane-select">
+                        <option value="none">None</option>
+                        <option value="preset" :disabled="commands.length === 0">From project commands</option>
+                        <option value="custom">Custom command</option>
+                      </select>
+
+                      <select
+                        v-if="pane.commandType === 'preset'"
+                        v-model="pane.selectedCommandId"
+                        class="pane-select"
+                      >
+                        <option value="">Select a command...</option>
+                        <option v-for="cmd in commands" :key="cmd.id" :value="cmd.id">
+                          {{ cmd.name }}
+                        </option>
+                      </select>
+
+                      <input
+                        v-if="pane.commandType === 'custom'"
+                        v-model="pane.customCommand"
+                        type="text"
+                        placeholder="Enter command..."
+                        class="pane-input"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -228,7 +307,7 @@ const close = () => {
   background: var(--bg-secondary);
   border-radius: 16px;
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -389,8 +468,65 @@ form {
   font-size: 12px !important;
 }
 
-.pane-input:last-child {
+.pane-field {
+  margin-bottom: 8px;
+}
+
+.pane-field:last-child {
   margin-bottom: 0;
+}
+
+.pane-field label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 4px;
+}
+
+.input-with-button input {
+  flex: 1;
+}
+
+.browse-btn {
+  background: var(--bg-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  padding: 0 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.browse-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.pane-select {
+  width: 100%;
+  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.pane-select:last-child {
+  margin-bottom: 0;
+}
+
+.pane-select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .layout-preview {
