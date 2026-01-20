@@ -7,6 +7,7 @@ const props = defineProps<{
   visible: boolean;
   projectPath: string;
   commands: Command[];
+  globalCommands: Command[];
 }>();
 
 const emit = defineEmits<{
@@ -96,11 +97,28 @@ const browseDirectory = async (pane: PaneConfig) => {
   }
 };
 
+const allCommands = computed(() => {
+  const cmds: { id: string; name: string; command: string; isGlobal: boolean }[] = [];
+
+  // Add global commands first
+  props.globalCommands.forEach(cmd => {
+    cmds.push({ ...cmd, isGlobal: true });
+  });
+
+  // Add project commands
+  props.commands.forEach(cmd => {
+    cmds.push({ ...cmd, isGlobal: false });
+  });
+
+  return cmds;
+});
+
 const getCommandForPane = (pane: PaneConfig): string | undefined => {
   if (pane.commandType === "none") {
     return undefined;
   } else if (pane.commandType === "preset" && pane.selectedCommandId) {
-    const cmd = props.commands.find(c => c.id === pane.selectedCommandId);
+    // Search in both global and project commands
+    const cmd = allCommands.value.find(c => c.id === pane.selectedCommandId);
     return cmd?.command;
   } else if (pane.commandType === "custom") {
     return pane.customCommand || undefined;
@@ -227,7 +245,7 @@ const close = () => {
                       <label>Command</label>
                       <select v-model="pane.commandType" class="pane-select">
                         <option value="none">None</option>
-                        <option value="preset" :disabled="commands.length === 0">From project commands</option>
+                        <option value="preset" :disabled="allCommands.length === 0">Select command</option>
                         <option value="custom">Custom command</option>
                       </select>
 
@@ -237,9 +255,16 @@ const close = () => {
                         class="pane-select"
                       >
                         <option value="">Select a command...</option>
-                        <option v-for="cmd in commands" :key="cmd.id" :value="cmd.id">
-                          {{ cmd.name }}
-                        </option>
+                        <optgroup v-if="globalCommands.length > 0" label="Global Commands">
+                          <option v-for="cmd in globalCommands" :key="cmd.id" :value="cmd.id">
+                            {{ cmd.name }}
+                          </option>
+                        </optgroup>
+                        <optgroup v-if="commands.length > 0" label="Project Commands">
+                          <option v-for="cmd in commands" :key="cmd.id" :value="cmd.id">
+                            {{ cmd.name }}
+                          </option>
+                        </optgroup>
                       </select>
 
                       <input

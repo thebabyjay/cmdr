@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useProjectsStore } from "@/stores/projects";
+import { useSettingsStore } from "@/stores/settings";
 import type { Workspace, Command, Environment, Pane } from "@/types";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -13,6 +14,9 @@ import AddCommandModal from "@/components/AddCommandModal.vue";
 const route = useRoute();
 const router = useRouter();
 const projectsStore = useProjectsStore();
+const settingsStore = useSettingsStore();
+
+const globalCommands = computed(() => settingsStore.settings.globalCommands || []);
 
 const activeTab = ref("overview");
 const showDeleteConfirm = ref(false);
@@ -59,10 +63,11 @@ watch(project, (newProject) => {
 }, { immediate: true });
 
 onMounted(() => {
-  console.log("[ProjectDetail] Mounted, loading projects");
+  console.log("[ProjectDetail] Mounted, loading projects and settings");
   if (!projectsStore.projects.length) {
     projectsStore.loadProjects();
   }
+  settingsStore.loadSettings();
 });
 
 const openProject = async () => {
@@ -799,6 +804,7 @@ const runCommand = async (command: Command) => {
       v-model:visible="showAddWorkspace"
       :project-path="project.path"
       :commands="project.commands"
+      :global-commands="globalCommands"
       @add="addWorkspace"
     />
 
@@ -967,15 +973,25 @@ const runCommand = async (command: Command) => {
                             if (val === 'none') {
                               updatePaneCommand(rowIndex, colIndex - 1, '');
                             } else if (val !== 'custom') {
-                              const cmd = project?.commands.find(c => c.id === val);
+                              // Check global commands first, then project commands
+                              const globalCmd = globalCommands.find(c => c.id === val);
+                              const projectCmd = project?.commands.find(c => c.id === val);
+                              const cmd = globalCmd || projectCmd;
                               if (cmd) updatePaneCommand(rowIndex, colIndex - 1, cmd.command);
                             }
                           }"
                         >
                           <option value="none">None</option>
-                          <option v-for="cmd in project?.commands" :key="cmd.id" :value="cmd.id">
-                            {{ cmd.name }}
-                          </option>
+                          <optgroup v-if="globalCommands.length > 0" label="Global Commands">
+                            <option v-for="cmd in globalCommands" :key="cmd.id" :value="cmd.id">
+                              {{ cmd.name }}
+                            </option>
+                          </optgroup>
+                          <optgroup v-if="project?.commands.length" label="Project Commands">
+                            <option v-for="cmd in project?.commands" :key="cmd.id" :value="cmd.id">
+                              {{ cmd.name }}
+                            </option>
+                          </optgroup>
                           <option value="custom">Custom...</option>
                         </select>
                         <input

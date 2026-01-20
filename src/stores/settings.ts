@@ -7,6 +7,8 @@ export const useSettingsStore = defineStore("settings", () => {
   const settings = ref<AppSettings>({
     defaultTerminal: "iterm2",
     theme: "dark",
+    terminalBehavior: "new_window",
+    globalCommands: [],
   });
   const loading = ref(false);
 

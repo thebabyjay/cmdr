@@ -12,6 +12,8 @@ pub struct AppSettings {
     pub default_projects_path: Option<String>,
     #[serde(default = "default_terminal_behavior", alias = "terminal_behavior")]
     pub terminal_behavior: String, // "new_window" or "use_existing"
+    #[serde(default, alias = "global_commands")]
+    pub global_commands: Vec<Command>,
 }
 
 fn default_terminal() -> String {
@@ -33,6 +35,7 @@ impl Default for AppSettings {
             theme: default_theme(),
             default_projects_path: None,
             terminal_behavior: default_terminal_behavior(),
+            global_commands: Vec::new(),
         }
     }
 }

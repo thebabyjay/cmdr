@@ -48,4 +48,5 @@ export interface AppSettings {
   theme: "dark" | "light";
   defaultProjectsPath?: string;
   terminalBehavior: "new_window" | "use_existing";
+  globalCommands: Command[];
 }
