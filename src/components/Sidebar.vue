@@ -38,6 +38,7 @@ const isActive = (path: string) => {
 
     <div class="sidebar-footer">
       <span class="version">v0.1.0</span>
+      <span class="debug-hint">Debug: Ctrl+Shift+D</span>
     </div>
   </aside>
 </template>
@@ -105,10 +106,19 @@ const isActive = (path: string) => {
 .sidebar-footer {
   padding: 16px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .version {
   color: var(--text-secondary);
   font-size: 12px;
+}
+
+.debug-hint {
+  color: var(--text-secondary);
+  font-size: 10px;
+  opacity: 0.6;
 }
 </style>
