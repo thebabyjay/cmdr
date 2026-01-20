@@ -295,6 +295,29 @@ const updatePaneCommand = (row: number, col: number, value: string) => {
   }
 };
 
+// Helper to determine what command selection should be shown for a pane
+const getCommandSelection = (row: number, col: number): string => {
+  const pane = getPaneForPosition(row, col);
+  if (!pane?.command) return 'none';
+
+  // Check if command matches a global command
+  const globalCmd = globalCommands.value.find(c => c.command === pane.command);
+  if (globalCmd) return globalCmd.id;
+
+  // Check if command matches a project command
+  const projectCmd = project.value?.commands.find(c => c.command === pane.command);
+  if (projectCmd) return projectCmd.id;
+
+  // Has a command but doesn't match any preset
+  return 'custom';
+};
+
+// Check if a pane's command is a preset (not custom)
+const isPaneCommandPreset = (row: number, col: number): boolean => {
+  const selection = getCommandSelection(row, col);
+  return selection !== 'none' && selection !== 'custom';
+};
+
 const browsePaneDirectory = async (row: number, col: number) => {
   if (!editingWorkspace.value || !project.value) return;
   const pane = editingWorkspace.value.panes.find(
@@ -967,12 +990,16 @@ const runCommand = async (command: Command) => {
                       <div class="command-input-group">
                         <select
                           class="pane-select"
-                          :value="getPaneForPosition(rowIndex, colIndex - 1)?.command ? 'custom' : 'none'"
+                          :value="getCommandSelection(rowIndex, colIndex - 1)"
                           @change="(e) => {
                             const val = (e.target as HTMLSelectElement).value;
                             if (val === 'none') {
                               updatePaneCommand(rowIndex, colIndex - 1, '');
-                            } else if (val !== 'custom') {
+                            } else if (val === 'custom') {
+                              // Keep existing command or set empty for user to type
+                              const pane = getPaneForPosition(rowIndex, colIndex - 1);
+                              if (!pane?.command) updatePaneCommand(rowIndex, colIndex - 1, '');
+                            } else {
                               // Check global commands first, then project commands
                               const globalCmd = globalCommands.find(c => c.id === val);
                               const projectCmd = project?.commands.find(c => c.id === val);
@@ -995,12 +1022,14 @@ const runCommand = async (command: Command) => {
                           <option value="custom">Custom...</option>
                         </select>
                         <input
-                          v-if="getPaneForPosition(rowIndex, colIndex - 1)?.command"
+                          v-if="getCommandSelection(rowIndex, colIndex - 1) !== 'none'"
                           :value="getPaneForPosition(rowIndex, colIndex - 1)?.command || ''"
                           @input="updatePaneCommand(rowIndex, colIndex - 1, ($event.target as HTMLInputElement).value)"
                           type="text"
                           placeholder="Enter command..."
                           class="pane-input"
+                          :disabled="isPaneCommandPreset(rowIndex, colIndex - 1)"
+                          :class="{ 'input-disabled': isPaneCommandPreset(rowIndex, colIndex - 1) }"
                         />
                       </div>
                     </div>
@@ -1711,6 +1740,13 @@ const runCommand = async (command: Command) => {
 .pane-select:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.pane-input.input-disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 .layout-preview-section {
