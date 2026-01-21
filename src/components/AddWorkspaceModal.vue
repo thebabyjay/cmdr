@@ -97,6 +97,28 @@ const browseDirectory = async (pane: PaneConfig) => {
   }
 };
 
+// Explicit update functions to ensure reactivity
+const updatePaneCommandType = (rowIndex: number, paneIndex: number, type: 'none' | 'preset' | 'custom') => {
+  const pane = rows.value[rowIndex].panes[paneIndex];
+  pane.commandType = type;
+  if (type === 'none') {
+    pane.selectedCommandId = '';
+    pane.customCommand = '';
+  } else if (type === 'preset') {
+    pane.customCommand = '';
+  } else if (type === 'custom') {
+    pane.selectedCommandId = '';
+  }
+};
+
+const updatePaneSelectedCommand = (rowIndex: number, paneIndex: number, commandId: string) => {
+  rows.value[rowIndex].panes[paneIndex].selectedCommandId = commandId;
+};
+
+const updatePaneCustomCommand = (rowIndex: number, paneIndex: number, value: string) => {
+  rows.value[rowIndex].panes[paneIndex].customCommand = value;
+};
+
 const allCommands = computed(() => {
   const cmds: { id: string; name: string; command: string; isGlobal: boolean }[] = [];
 
@@ -256,7 +278,11 @@ const close = () => {
 
                     <div class="pane-field">
                       <label>Command</label>
-                      <select v-model="pane.commandType" class="pane-select">
+                      <select
+                        :value="pane.commandType"
+                        @change="(e) => updatePaneCommandType(rowIndex, paneIndex, (e.target as HTMLSelectElement).value as 'none' | 'preset' | 'custom')"
+                        class="pane-select"
+                      >
                         <option value="none">None</option>
                         <option value="preset" :disabled="allCommands.length === 0">Select command</option>
                         <option value="custom">Custom command</option>
@@ -264,7 +290,8 @@ const close = () => {
 
                       <select
                         v-if="pane.commandType === 'preset'"
-                        v-model="pane.selectedCommandId"
+                        :value="pane.selectedCommandId"
+                        @change="(e) => updatePaneSelectedCommand(rowIndex, paneIndex, (e.target as HTMLSelectElement).value)"
                         class="pane-select"
                       >
                         <option value="">Select a command...</option>
@@ -282,7 +309,8 @@ const close = () => {
 
                       <input
                         v-if="pane.commandType === 'custom'"
-                        v-model="pane.customCommand"
+                        :value="pane.customCommand"
+                        @input="(e) => updatePaneCustomCommand(rowIndex, paneIndex, (e.target as HTMLInputElement).value)"
                         type="text"
                         placeholder="Enter command..."
                         class="pane-input"
