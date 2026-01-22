@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "dotenv -e .env -- tauri"
+    "tauri": "dotenv -e .env -- tauri",
+    "notarize": "dotenv -e .env -- sh -c 'xcrun notarytool submit \"$1\" --apple-id \"$APPLE_ID\" --team-id \"$APPLE_TEAM_ID\" --password \"$APPLE_PASSWORD\" --wait --verbose' --",
+    "notarize:log": "dotenv -e .env -- sh -c 'xcrun notarytool log \"$1\" --apple-id \"$APPLE_ID\" --team-id \"$APPLE_TEAM_ID\" --password \"$APPLE_PASSWORD\"' --",
+    "notarize:history": "dotenv -e .env -- sh -c 'xcrun notarytool history --apple-id \"$APPLE_ID\" --team-id \"$APPLE_TEAM_ID\" --password \"$APPLE_PASSWORD\"' --"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
