@@ -1,7 +1,22 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router";
+import { computed } from "vue";
+import { useSettingsStore } from "@/stores/settings";
 
 const route = useRoute();
+const settingsStore = useSettingsStore();
+
+const isDark = computed(() => settingsStore.settings.theme !== "light");
+
+const toggleTheme = async () => {
+  const newTheme = isDark.value ? "light" : "dark";
+  const newSettings = { ...settingsStore.settings, theme: newTheme };
+  try {
+    await settingsStore.saveSettings(newSettings);
+  } catch (e) {
+    console.error("Failed to save theme:", e);
+  }
+};
 
 const menuItems = [
   { name: "Dashboard", path: "/", icon: "pi-home" },
@@ -36,8 +51,12 @@ const isActive = (path: string) => {
     </nav>
 
     <div class="sidebar-footer">
-      <span class="version">v0.1.0</span>
-      <span class="debug-hint">Debug: Ctrl+Shift+D</span>
+      <div class="footer-left">
+        <span class="version">v0.1.0</span>
+      </div>
+      <button class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'">
+        <i :class="['pi', isDark ? 'pi-sun' : 'pi-moon']"></i>
+      </button>
     </div>
   </aside>
 </template>
@@ -127,15 +146,39 @@ const isActive = (path: string) => {
   align-items: center;
 }
 
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .version {
   color: var(--text-muted);
   font-size: 11px;
   font-family: "SF Mono", monospace;
 }
 
-.debug-hint {
-  color: var(--text-muted);
-  font-size: 10px;
-  opacity: 0.7;
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.theme-toggle i {
+  font-size: 14px;
 }
 </style>

@@ -79,7 +79,7 @@ const confirm = () => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .modal-header h2 {
@@ -112,7 +112,7 @@ const confirm = () => {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-primary);
 }
 
 .btn-danger {

@@ -134,7 +134,7 @@ const close = () => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .modal-header h2 {
@@ -173,7 +173,7 @@ form {
   width: 100%;
   padding: 12px;
   background: var(--bg-primary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
@@ -195,7 +195,7 @@ form {
 }
 
 .error-message {
-  background: rgba(255, 82, 82, 0.1);
+  background: var(--danger-muted);
   border: 1px solid var(--danger);
   color: var(--danger);
   padding: 12px;
@@ -209,6 +209,6 @@ form {
   justify-content: flex-end;
   gap: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-primary);
 }
 </style>
