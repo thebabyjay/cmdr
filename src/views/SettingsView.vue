@@ -184,11 +184,11 @@ const deleteGlobalCommand = async (cmdId: string) => {
             <span v-if="cmd.description" class="command-desc">{{ cmd.description }}</span>
           </div>
           <div class="command-actions">
-            <button class="btn btn-icon" @click="openEditCommand(cmd)" title="Edit">
-              <i class="pi pi-pencil"></i>
+            <button class="btn btn-secondary btn-sm" @click="openEditCommand(cmd)">
+              <i class="pi pi-pencil"></i> Edit
             </button>
-            <button class="btn btn-icon btn-danger" @click="deleteGlobalCommand(cmd.id)" title="Delete">
-              <i class="pi pi-trash"></i>
+            <button class="btn btn-secondary btn-sm btn-danger-ghost" @click="deleteGlobalCommand(cmd.id)">
+              <i class="pi pi-trash"></i> Delete
             </button>
           </div>
         </div>
@@ -200,7 +200,7 @@ const deleteGlobalCommand = async (cmdId: string) => {
       <div class="modal">
         <div class="modal-header">
           <h3>Add Global Command</h3>
-          <button class="btn btn-icon" @click="showAddCommand = false">
+          <button class="btn btn-ghost" @click="showAddCommand = false">
             <i class="pi pi-times"></i>
           </button>
         </div>
@@ -232,7 +232,7 @@ const deleteGlobalCommand = async (cmdId: string) => {
       <div class="modal">
         <div class="modal-header">
           <h3>Edit Global Command</h3>
-          <button class="btn btn-icon" @click="showEditCommand = false">
+          <button class="btn btn-ghost" @click="showEditCommand = false">
             <i class="pi pi-times"></i>
           </button>
         </div>
@@ -489,34 +489,17 @@ const deleteGlobalCommand = async (cmdId: string) => {
 
 .command-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border-primary);
-  border-radius: 4px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
+.btn-danger-ghost {
+  color: var(--text-secondary);
 }
 
-.btn-icon:hover {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  border-color: var(--border-accent);
-}
-
-.btn-icon.btn-danger:hover {
-  background: var(--danger-muted);
-  border-color: var(--danger);
-  color: var(--danger);
+.btn-danger-ghost:hover {
+  background: var(--danger-muted) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
 }
 
 /* Modal styles */

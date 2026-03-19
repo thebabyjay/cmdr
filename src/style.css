@@ -365,3 +365,98 @@ select {
 .animate-slide-up {
   animation: slideUp 0.2s ease;
 }
+
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.data-table th:hover {
+  color: var(--text-primary);
+}
+
+.data-table th .sort-icon {
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.data-table th .sort-icon.active {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover td {
+  background: var(--bg-secondary);
+}
+
+/* Expandable table rows */
+.expand-row td {
+  padding: 0;
+  background: var(--bg-secondary);
+}
+
+.expand-row .expand-content {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Page sections (for single-scroll layouts) */
+.page-section {
+  margin-bottom: 32px;
+}
+
+.page-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.page-section-header h2 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Action button group */
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

@@ -10,6 +10,12 @@ onMounted(() => {
   projectsStore.loadProjects();
 });
 
+const recentProjects = computed(() => {
+  return [...projectsStore.projects]
+    .sort((a, b) => (b.lastOpened || "").localeCompare(a.lastOpened || ""))
+    .slice(0, 5);
+});
+
 // Get all workspaces flattened with project info for "recent" display
 const recentWorkspaces = computed(() => {
   const workspaces: { projectId: string; projectName: string; projectPath: string; workspace: any }[] = [];
@@ -25,14 +31,12 @@ const recentWorkspaces = computed(() => {
     });
   });
 
-  return workspaces.slice(0, 6); // Show up to 6 recent workspaces
+  return workspaces.slice(0, 6);
 });
 
 const launchWorkspace = async (projectId: string, workspaceId: string) => {
-  console.log("[Dashboard] Launching workspace:", workspaceId, "for project:", projectId);
   try {
     await invoke("launch_workspace", { projectId, workspaceId });
-    console.log("[Dashboard] Workspace launched successfully");
   } catch (e) {
     console.error("[Dashboard] Failed to launch workspace:", e);
     alert("Failed to launch workspace: " + e);
@@ -46,6 +50,21 @@ const getPaneCount = (workspace: any) => {
 const getLayoutDisplay = (workspace: any) => {
   if (!workspace.layout?.columns) return "";
   return workspace.layout.columns.join(" × ");
+};
+
+const lastOpenedFormatted = (dateStr?: string) => {
+  if (!dateStr) return "Never";
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
 };
 </script>
 
@@ -68,25 +87,22 @@ const getLayoutDisplay = (workspace: any) => {
         <router-link to="/workspaces" class="view-all">All workspaces</router-link>
       </div>
 
-      <div class="workspace-grid">
+      <div class="workspace-list">
         <div
           v-for="item in recentWorkspaces"
           :key="`${item.projectId}-${item.workspace.id}`"
-          class="workspace-card"
+          class="workspace-row"
         >
-          <div class="workspace-info">
-            <div class="workspace-name">{{ item.workspace.name }}</div>
-            <div class="workspace-project">
-              <i class="pi pi-folder"></i>
-              {{ item.projectName }}
-            </div>
-            <div class="workspace-meta">
-              <span class="pane-count">{{ getPaneCount(item.workspace) }} panes</span>
-              <span class="layout-info">{{ getLayoutDisplay(item.workspace) }}</span>
-            </div>
+          <div class="workspace-details">
+            <span class="workspace-name">{{ item.workspace.name }}</span>
+            <span class="workspace-project-badge">{{ item.projectName }}</span>
+          </div>
+          <div class="workspace-meta">
+            <span class="pane-count">{{ getPaneCount(item.workspace) }} panes</span>
+            <span class="layout-info">{{ getLayoutDisplay(item.workspace) }}</span>
           </div>
           <button
-            class="btn btn-primary btn-launch"
+            class="btn btn-primary btn-sm"
             @click="launchWorkspace(item.projectId, item.workspace.id)"
           >
             <i class="pi pi-play"></i>
@@ -96,11 +112,11 @@ const getLayoutDisplay = (workspace: any) => {
       </div>
     </section>
 
-    <!-- Projects with Workspaces -->
+    <!-- Recent Projects -->
     <section class="projects-section">
       <div class="section-header">
-        <h2>Projects</h2>
-        <router-link to="/projects" class="view-all">Manage projects</router-link>
+        <h2>Recent Projects</h2>
+        <router-link to="/projects" class="view-all">All projects</router-link>
       </div>
 
       <div v-if="projectsStore.loading" class="loading">Loading...</div>
@@ -108,50 +124,24 @@ const getLayoutDisplay = (workspace: any) => {
       <div v-else-if="projectsStore.projects.length === 0" class="empty-state">
         <i class="pi pi-folder-open"></i>
         <p>No projects yet</p>
-        <router-link to="/projects" class="btn btn-primary">
+        <router-link to="/projects?new=true" class="btn btn-primary">
           Add your first project
         </router-link>
       </div>
 
       <div v-else class="project-list">
-        <div
-          v-for="project in projectsStore.projects"
+        <router-link
+          v-for="project in recentProjects"
           :key="project.id"
+          :to="`/projects/${project.id}`"
           class="project-row"
         >
           <div class="project-info">
-            <router-link :to="`/projects/${project.id}`" class="project-name">
-              {{ project.name }}
-            </router-link>
-            <div class="project-path">{{ project.path }}</div>
+            <span class="project-name">{{ project.name }}</span>
+            <span class="project-path">{{ project.path }}</span>
           </div>
-
-          <div class="project-workspaces" v-if="project.workspaces?.length">
-            <button
-              v-for="ws in project.workspaces.slice(0, 3)"
-              :key="ws.id"
-              class="workspace-chip"
-              @click="launchWorkspace(project.id, ws.id)"
-              :title="`Launch ${ws.name}`"
-            >
-              <i class="pi pi-play"></i>
-              {{ ws.name }}
-            </button>
-            <span v-if="project.workspaces.length > 3" class="more-workspaces">
-              +{{ project.workspaces.length - 3 }} more
-            </span>
-          </div>
-          <div v-else class="no-workspaces">
-            <router-link :to="`/projects/${project.id}?tab=workspaces`" class="add-workspace-link">
-              <i class="pi pi-plus"></i>
-              Add workspace
-            </router-link>
-          </div>
-
-          <router-link :to="`/projects/${project.id}`" class="project-settings-btn" title="Project settings">
-            <i class="pi pi-cog"></i>
-          </router-link>
-        </div>
+          <span class="project-opened">{{ lastOpenedFormatted(project.lastOpened) }}</span>
+        </router-link>
       </div>
     </section>
   </div>
@@ -212,70 +202,63 @@ h2 {
   margin-bottom: 10px;
 }
 
-/* Workspace Grid - Quick Launch */
-.workspace-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px;
-}
-
-.workspace-card {
+/* Workspace List - Quick Launch */
+.workspace-list {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--bg-card);
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border-subtle);
   border: 1px solid var(--border-primary);
   border-radius: 6px;
-  transition: border-color 0.15s ease;
+  overflow: hidden;
 }
 
-.workspace-card:hover {
-  border-color: var(--border-accent);
+.workspace-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  transition: background 0.1s ease;
 }
 
-.workspace-info {
+.workspace-row:hover {
+  background: var(--bg-secondary);
+}
+
+.workspace-details {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
 .workspace-name {
   font-weight: 600;
   font-size: 14px;
-  margin-bottom: 2px;
   color: var(--text-primary);
 }
 
-.workspace-project {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.workspace-project i {
+.workspace-project-badge {
   font-size: 11px;
-  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .workspace-meta {
   display: flex;
-  gap: 8px;
-  font-size: 11px;
+  gap: 12px;
+  font-size: 12px;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .layout-info {
   font-family: "SF Mono", monospace;
-}
-
-.btn-launch {
-  padding: 6px 12px;
-  font-size: 12px;
-  flex-shrink: 0;
-  margin-left: 12px;
 }
 
 /* Project List */
@@ -293,9 +276,10 @@ h2 {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   background: var(--bg-card);
   transition: background 0.1s ease;
+  text-decoration: none;
 }
 
 .project-row:hover {
@@ -304,6 +288,9 @@ h2 {
 
 .project-info {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -311,12 +298,9 @@ h2 {
   font-weight: 500;
   font-size: 14px;
   color: var(--text-primary);
-  text-decoration: none;
-  display: block;
-  margin-bottom: 2px;
 }
 
-.project-name:hover {
+.project-row:hover .project-name {
   color: var(--accent);
 }
 
@@ -329,83 +313,11 @@ h2 {
   text-overflow: ellipsis;
 }
 
-.project-workspaces {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.workspace-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background: var(--accent-muted);
-  color: var(--accent);
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.workspace-chip:hover {
-  background: var(--accent);
-  color: var(--text-inverse);
-}
-
-.workspace-chip i {
-  font-size: 10px;
-}
-
-.more-workspaces {
-  font-size: 11px;
-  color: var(--text-muted);
-  padding-left: 4px;
-}
-
-.no-workspaces {
-  flex-shrink: 0;
-}
-
-.add-workspace-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.project-opened {
   font-size: 12px;
   color: var(--text-muted);
-  text-decoration: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.15s ease;
-}
-
-.add-workspace-link:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-}
-
-.add-workspace-link i {
-  font-size: 10px;
-}
-
-.project-settings-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--text-muted);
-  border-radius: 4px;
-  transition: all 0.15s ease;
   flex-shrink: 0;
-}
-
-.project-settings-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* Empty State */

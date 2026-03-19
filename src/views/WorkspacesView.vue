@@ -11,7 +11,6 @@ const settingsStore = useSettingsStore();
 const globalCommands = computed(() => settingsStore.settings.globalCommands || []);
 
 onMounted(() => {
-  console.log("[WorkspacesView] Mounted, loading projects");
   projectsStore.loadProjects();
   settingsStore.loadSettings();
 });
@@ -23,18 +22,15 @@ const allWorkspaces = computed(() => {
       workspaces.push({ workspace, project });
     }
   }
-  console.log("[WorkspacesView] Computed all workspaces:", workspaces.length);
   return workspaces;
 });
 
 const launchWorkspace = async (projectId: string, workspaceId: string) => {
-  console.log("[WorkspacesView] Launching workspace:", workspaceId, "for project:", projectId);
   try {
     await invoke("launch_workspace", {
       projectId,
       workspaceId,
     });
-    console.log("[WorkspacesView] Workspace launched successfully");
   } catch (e) {
     console.error("[WorkspacesView] Failed to launch workspace:", e);
     alert("Failed to launch workspace: " + e);
@@ -50,16 +46,31 @@ const getWorkspacePaneAt = (workspace: Workspace, row: number, col: number): Pan
 const getCommandDisplayText = (pane: Pane | undefined, project: Project): string => {
   if (!pane?.command) return '';
 
-  // Check if it matches a global command
   const globalCmd = globalCommands.value.find(c => c.command === pane.command);
   if (globalCmd) return globalCmd.name;
 
-  // Check if it matches a project command
   const projectCmd = project.commands.find(c => c.command === pane.command);
   if (projectCmd) return projectCmd.name;
 
-  // Custom command - truncate if too long
-  return pane.command.length > 15 ? pane.command.slice(0, 15) + '...' : pane.command;
+  return pane.command.length > 20 ? pane.command.slice(0, 20) + '...' : pane.command;
+};
+
+// Get directory display for a pane
+const getPaneDirectoryDisplay = (pane: Pane | undefined): string => {
+  if (!pane) return './';
+  if (!pane.directory || pane.directory === '.') return './';
+  return pane.directory.length > 20 ? '.../' + pane.directory.split('/').pop() : pane.directory;
+};
+
+const getPaneCount = (workspace: Workspace) => {
+  return workspace.layout?.columns?.reduce((sum: number, cols: number) => sum + cols, 0) || 0;
+};
+
+const getLayoutDisplay = (workspace: Workspace) => {
+  if (!workspace.layout?.columns) return "";
+  const rows = workspace.layout.columns.length;
+  const totalPanes = getPaneCount(workspace);
+  return `${rows} row${rows > 1 ? 's' : ''}, ${totalPanes} pane${totalPanes > 1 ? 's' : ''}`;
 };
 </script>
 
@@ -84,51 +95,67 @@ const getCommandDisplayText = (pane: Pane | undefined, project: Project): string
       <p>Add a workspace from a project's detail page.</p>
     </div>
 
-    <div v-else class="workspaces-grid">
+    <div v-else class="workspaces-list">
       <div
         v-for="{ workspace, project } in allWorkspaces"
         :key="`${project.id}-${workspace.id}`"
-        class="workspace-card card"
+        class="workspace-card"
       >
-        <div class="workspace-header">
-          <h3>{{ workspace.name }}</h3>
-          <span class="project-badge">{{ project.name }}</span>
-        </div>
+        <div class="card-main">
+          <div class="card-info">
+            <div class="card-title-row">
+              <h3>{{ workspace.name }}</h3>
+              <span class="project-badge">
+                <i class="pi pi-folder"></i>
+                {{ project.name }}
+              </span>
+            </div>
+            <div class="card-meta">
+              <span class="layout-detail">
+                <i class="pi pi-th-large"></i>
+                {{ getLayoutDisplay(workspace) }}
+              </span>
+            </div>
+          </div>
 
-        <div class="workspace-preview">
-          <div class="layout-preview">
-            <div
-              v-for="(cols, row) in workspace.layout.columns"
-              :key="row"
-              class="layout-row"
-              :style="{ flex: 1 }"
-            >
+          <div class="card-preview">
+            <div class="layout-preview">
               <div
-                v-for="col in cols"
-                :key="col"
-                class="layout-cell"
+                v-for="(cols, row) in workspace.layout.columns"
+                :key="row"
+                class="layout-row"
                 :style="{ flex: 1 }"
               >
-                <span class="cell-command">{{ getCommandDisplayText(getWorkspacePaneAt(workspace, row, col - 1), project) }}</span>
+                <div
+                  v-for="col in cols"
+                  :key="col"
+                  class="layout-cell"
+                  :style="{ flex: 1 }"
+                >
+                  <span class="cell-command">{{ getCommandDisplayText(getWorkspacePaneAt(workspace, row, col - 1), project) }}</span>
+                  <span class="cell-dir">{{ getPaneDirectoryDisplay(getWorkspacePaneAt(workspace, row, col - 1)) }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="workspace-info">
-          <span>
-            <i class="pi pi-window-maximize"></i>
-            {{ workspace.panes.length }} panes
-          </span>
+          <div class="card-actions">
+            <button
+              class="btn btn-primary"
+              @click="launchWorkspace(project.id, workspace.id)"
+            >
+              <i class="pi pi-play"></i>
+              Launch
+            </button>
+            <router-link
+              :to="`/projects/${project.id}`"
+              class="btn btn-secondary"
+            >
+              <i class="pi pi-pencil"></i>
+              Edit
+            </router-link>
+          </div>
         </div>
-
-        <button
-          class="btn btn-primary"
-          @click="launchWorkspace(project.id, workspace.id)"
-        >
-          <i class="pi pi-play"></i>
-          Launch
-        </button>
       </div>
     </div>
   </div>
@@ -175,90 +202,150 @@ const getCommandDisplayText = (pane: Pane | undefined, project: Project): string
   margin: 0 auto 8px;
 }
 
-.workspaces-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+/* Stacked vertical list */
+.workspaces-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .workspace-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  padding: 16px 20px;
+  transition: border-color 0.15s ease;
 }
 
-.workspace-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.workspace-card:hover {
+  border-color: var(--border-accent);
 }
 
-.workspace-header h3 {
+.card-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.card-title-row h3 {
   font-size: 16px;
+  font-weight: 600;
+  margin: 0;
 }
 
 .project-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
-  padding: 4px 8px;
-  background: rgba(0, 217, 255, 0.15);
+  padding: 2px 8px;
+  background: var(--accent-muted);
   color: var(--accent);
   border-radius: 4px;
+  white-space: nowrap;
 }
 
-.workspace-preview {
-  background: var(--bg-primary);
-  border-radius: 8px;
-  padding: 8px;
-  height: 100px;
+.project-badge i {
+  font-size: 10px;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.layout-detail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.layout-detail i {
+  font-size: 11px;
+}
+
+/* Layout preview */
+.card-preview {
+  width: 220px;
+  flex-shrink: 0;
 }
 
 .layout-preview {
-  height: 100%;
+  height: 80px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  padding: 6px;
 }
 
 .layout-row {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .layout-cell {
   background: var(--bg-secondary);
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  border: 1px solid var(--border-subtle);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 2px;
+  padding: 2px 4px;
+  gap: 1px;
 }
 
 .cell-command {
-  font-size: 8px;
-  color: var(--text-muted);
+  font-size: 9px;
+  color: var(--text-secondary);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
   font-family: "SF Mono", monospace;
+  font-weight: 500;
 }
 
-.workspace-info {
-  color: var(--text-secondary);
-  font-size: 13px;
+.cell-dir {
+  font-size: 7px;
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Actions */
+.card-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
+  flex-shrink: 0;
 }
 
-.workspace-card .btn {
-  display: flex;
-  align-items: center;
+.card-actions .btn {
+  min-width: 100px;
   justify-content: center;
-  gap: 8px;
 }
 
 .loading {
